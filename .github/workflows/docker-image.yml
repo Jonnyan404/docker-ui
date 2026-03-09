@@ -11,7 +11,7 @@ on:
       push_latest:
         description: 'Also push the latest tag'
         required: false
-        default: false
+        default: true
         type: boolean
 
 permissions:
