@@ -1,0 +1,17 @@
+.git
+.gitignore
+
+# Local/runtime artifacts
+*.log
+data.db
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+
+# OS/editor
+.DS_Store
+.vscode

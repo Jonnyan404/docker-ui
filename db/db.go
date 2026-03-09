@@ -2,9 +2,11 @@ package db
 
 import (
 	"database/sql"
+	"os"
+	"path/filepath"
 
 	"github.com/gohutool/boot4go-util/db"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 /**
@@ -22,11 +24,35 @@ import (
 var dbPlus db.DBPlus
 
 func init() {
-	db1, err := sql.Open("sqlite3", "./data.db")
+	dbPath := "./config/data.db"
+	if err := ensureDBFile(dbPath); err != nil {
+		panic(err)
+	}
+
+	db1, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		panic(err)
 	}
 	dbPlus = db.DBPlus{DB: db1}
+}
+
+func ensureDBFile(dbPath string) error {
+	dbDir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dbDir, 0o755); err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(dbPath); err == nil {
+		return nil
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	f, err := os.OpenFile(dbPath, os.O_RDWR|os.O_CREATE, 0o644)
+	if err != nil {
+		return err
+	}
+	return f.Close()
 }
 
 var sql_table = `CREATE TABLE if not exists "t_user" (

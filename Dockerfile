@@ -1,31 +1,35 @@
-FROM golang:1.18.0-alpine as build
-#RUN apk add build-base
-RUN apk add git --repository http://mirrors.aliyun.com/alpine/v3.15/main/
-RUN apk add libc-dev --repository http://mirrors.aliyun.com/alpine/v3.15/main/
-RUN apk add gcc --repository http://mirrors.aliyun.com/alpine/v3.15/main/
-ADD . /app
+FROM golang:1.24-alpine AS build
+
 WORKDIR /app
-ENV GO111MODULE=on
-ENV GOPROXY="https://goproxy.cn,direct"
-RUN go mod tidy
+
+ENV GO111MODULE=on \
+	CGO_ENABLED=0
+
+RUN apk add --no-cache git
+
+# Cache deps first
+COPY go.mod go.sum ./
 RUN go mod download
-RUN go build -o server .
+
+# Copy the rest and build
+COPY . .
+RUN go build -trimpath -ldflags="-s -w" -o /app/server .
 
 
-FROM alpine
+FROM alpine:3.20
 
 WORKDIR /app
-COPY --from=build /app/server /app
-COPY ./log4go.xml /app
-COPY ./data.db /app
+RUN apk add --no-cache ca-certificates
+
+COPY --from=build /app/server /app/server
+COPY ./log4go.xml /app/log4go.xml
 COPY ./html /app/html
-LABEL AUTHOR="joinsunsoft"
+
+LABEL AUTHOR="jonnyan404"
 LABEL LANGUAGE="golang"
 LABEL PRODUCT="docker"
-LABEL COPYRIGHT="joinsunsoft"
-LABEL DECLAIM="All right reserved by joinsunsoft"
-
-RUN  mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+LABEL COPYRIGHT="jonnyan404"
+LABEL DECLAIM="All right reserved by jonnyan404"
 
 EXPOSE 8999
 

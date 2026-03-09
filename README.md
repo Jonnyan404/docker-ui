@@ -116,11 +116,28 @@ Official site: https://github.com/gohutool/docker.ui
   - go build -o server .
 - Run ./server command to start
 
-### From hub.docker.com
+### Form docker-compose
+
+```
+# docker-compose.yml
+services:
+    docker-ui:
+        container_name: dockerui
+        restart: always
+        volumes:
+            - ./data:/app/config
+            - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+            - 8999:8999
+        image: jonnyan404/docker-ui
+        #command: -l 0.0.0.0:9000
+```
+
+### From docker
 - pull image from hub
-  - docker image pull joinsunsoft/docker.ui
+  - docker image pull jonnyan404/docker-ui
 - start container with image, and publish 8999 port to your port
-  - docker container run --rm --name docker.ui -v /var/run/docker.sock:/var/run/docker.sock -p 8999:8999 joinsunsoft/docker.ui
+  - docker run -d --name dockerui -v /var/run/docker.sock:/var/run/docker.sock -p 8999:8999 jonnyan404/docker-ui
 
 ## Visit the browser tool
 - Now, you can visit like as http://192.168.56.102:8999 .
