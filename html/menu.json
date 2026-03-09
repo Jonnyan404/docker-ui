@@ -115,5 +115,13 @@
     "state": "open",
     "iconCls": "fa fa-delicious",
     "url": "./orchestrator/orchestrator.html"
+  },
+  {
+    "id": 15001,
+    "pid": 1325,
+    "text": "用户管理",
+    "state": "open",
+    "iconCls": "fa fa-users",
+    "url": "./user/user.html"
   }
 ]

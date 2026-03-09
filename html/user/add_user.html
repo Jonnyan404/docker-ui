@@ -1,0 +1,42 @@
+<style>
+    .editTable .label {
+        min-width: 80px;
+        width: 80px;
+    }
+</style>
+<table class="editTable">
+    <tr>
+        <td class="label">用户名</td>
+        <td><input type="text" id="username" name="username" value=""></td>
+    </tr>
+    <tr>
+        <td class="label">密码</td>
+        <td><input type="password" id="password" name="password" value=""></td>
+    </tr>
+    <tr>
+        <td class="label">确认密码</td>
+        <td><input type="password" id="password2" name="password2" value=""></td>
+    </tr>
+</table>
+
+<script type="text/javascript">
+    $(function () {
+        $('#username').iTextbox({
+            width: 300,
+            prompt: '用户名，必须填写',
+            required: true
+        });
+        $('#password').iPasswordbox({
+            width: 300,
+            prompt: '密码,长度6-12，必须填写',
+            required: true,
+            validType: ['length[6,12]']
+        });
+        $('#password2').iPasswordbox({
+            width: 300,
+            prompt: '确认密码,必须填写且一致',
+            required: true,
+            validType: ['length[6,12]',"equals['#password']"]
+        });
+    });
+</script>

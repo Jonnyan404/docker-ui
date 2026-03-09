@@ -124,5 +124,18 @@ Official site: https://github.com/gohutool/docker.ui
 
 ## Visit the browser tool
 - Now, you can visit like as http://192.168.56.102:8999 .
-- Default Username/Password ginghan/123456
+- Default Username/Password dockerui/dockerui
 - Enjoy it now.
+
+## Forgot password / bootstrap admin
+
+If you forgot the password and cannot login to the UI, you can reset (or create) a user in the local sqlite database (`./data.db`) before starting the server.
+
+- Reset password (or create if not exists), then exit:
+  - `go run . --reset-user dockerui --reset-password NEW_PASSWORD`
+- Keep running the server after reset/create:
+  - `go run . --reset-user dockerui --reset-password NEW_PASSWORD --reset-keep-running`
+
+Note:
+- `dockerui` is created only on first database initialization (fresh `./data.db`). If you delete it later, it will NOT be restored automatically on restart.
+- Use `--reset-user` / `--reset-password` to recover access when no user can login.

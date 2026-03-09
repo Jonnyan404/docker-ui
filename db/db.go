@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+
 	"github.com/gohutool/boot4go-util/db"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -68,11 +69,19 @@ CREATE TABLE if not exists "t_orchestrator" (
 `
 
 func InitDB() {
+	var userTableExists int
+	if err := dbPlus.GetDB().QueryRow("select count(1) from sqlite_master where type='table' and name='t_user'").Scan(&userTableExists); err != nil {
+		panic(err)
+	}
 
 	_, err := dbPlus.GetDB().Exec(sql_table)
 	if err != nil {
 		panic(err)
 	}
 
-	InitAdminUser()
+	// Only create default admin user on first initialization (when schema is created).
+	// If user records are deleted later, they won't be auto-restored on restart.
+	if userTableExists == 0 {
+		InitAdminUser()
+	}
 }

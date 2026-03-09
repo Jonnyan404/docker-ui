@@ -23,6 +23,8 @@ const (
 	INSERT_USER           = `insert into t_user (userid, username, password, createtime) values(?,?,?,?)`
 	SELECT_USER_BY_NAME   = `select * from t_user where userid=?`
 	UPDATE_PWD_USER_BY_ID = `update t_user set password=? where userid=?`
+	SELECT_ALL_USERS      = `select userid, username, createtime from t_user order by createtime desc`
+	DELETE_USER_BY_ID     = `delete from t_user where userid=?`
 
 	INSERT_REPOS       = `insert into t_repos (reposid, name, description, endpoint, username, password, createtime) values(?, ?,?,?,?,?,?)`
 	SELECT_REPOS       = `select * from t_repos where reposid=?`
@@ -62,6 +64,10 @@ func CreateUser(username, password string) error {
 	return err
 }
 
+func UserIDFromUsername(username string) string {
+	return MD5(username)
+}
+
 func UpdatePwd(userid, passwd string) error {
 	passwd = SaltMd5(passwd, userid)
 	_, _, err := dbPlus.Exec(UPDATE_PWD_USER_BY_ID, passwd, userid)
@@ -85,4 +91,38 @@ func GetUser(userid string) *model.User {
 	//2022-05-13 13:54:40.5049073+08:00
 
 	return rtn
+}
+
+type UserRow struct {
+	UserID     string
+	UserName   string
+	CreateTime string
+}
+
+func ListUsers() ([]UserRow, error) {
+	rows, err := dbPlus.GetDB().Query(SELECT_ALL_USERS)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []UserRow
+	for rows.Next() {
+		var userID, username, createtime string
+		if err := rows.Scan(&userID, &username, &createtime); err != nil {
+			return nil, err
+		}
+		result = append(result, UserRow{UserID: userID, UserName: username, CreateTime: createtime})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func DeleteUser(userid string) error {
+	_, err := dbPlus.GetDB().Exec(DELETE_USER_BY_ID, userid)
+	return err
 }

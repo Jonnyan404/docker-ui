@@ -3,21 +3,6 @@ package main
 import (
 	"expvar"
 	"fmt"
-	"github.com/alecthomas/kingpin"
-	"github.com/gohutool/boot4go-docker-ui/db"
-	"github.com/gohutool/boot4go-docker-ui/handle"
-	. "github.com/gohutool/boot4go-docker-ui/log"
-	constants "github.com/gohutool/boot4go-docker-ui/model"
-	prometheusfasthttp "github.com/gohutool/boot4go-prometheus/fasthttp"
-	util4go "github.com/gohutool/boot4go-util"
-	httputil "github.com/gohutool/boot4go-util/http"
-	routing "github.com/qiangxue/fasthttp-routing"
-	"github.com/shirou/gopsutil/cpu"
-	"github.com/shirou/gopsutil/disk"
-	"github.com/shirou/gopsutil/mem"
-	"github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/expvarhandler"
-	"github.com/valyala/fasthttp/pprofhandler"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -28,6 +13,22 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/alecthomas/kingpin"
+	"github.com/gohutool/boot4go-docker-ui/db"
+	"github.com/gohutool/boot4go-docker-ui/handle"
+	. "github.com/gohutool/boot4go-docker-ui/log"
+	constants "github.com/gohutool/boot4go-docker-ui/model"
+	prometheusfasthttp "github.com/gohutool/boot4go-prometheus/fasthttp"
+	util4go "github.com/gohutool/boot4go-util"
+	httputil "github.com/gohutool/boot4go-util/http"
+	routing "github.com/qiangxue/fasthttp-routing"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/expvarhandler"
+	"github.com/valyala/fasthttp/pprofhandler"
 )
 
 /**
@@ -55,6 +56,10 @@ func main() {
 	issuer_flag := app.Flag("issuer", "Issuer: token's issuer.").Short('i').Default(constants.DEFAULT_ISSUER).String()
 	expired_flag := app.Flag("token_expire", "Token_expire: many hour(s) token will expire.").Short('e').Default("24").Int()
 
+	reset_user_flag := app.Flag("reset-user", "Reset password for username (creates user if not exists), then exit unless --reset-keep-running is set.").Default("").String()
+	reset_password_flag := app.Flag("reset-password", "Password used with --reset-user.").Default("").String()
+	reset_keep_running_flag := app.Flag("reset-keep-running", "Keep running the server after reset/create user.").Default("false").Bool()
+
 	li_flag := app.Flag("license", "License: CubeUI License.").Default("").String()
 	endpoint_flag := app.Flag("endpoint", "Endpoint: the endpoint of docker, default is unix, if tcp is open, like as 192.168.56.102:2375").Default("unix").String()
 
@@ -69,6 +74,28 @@ func main() {
 	db.InitDB()
 
 	Logger.Info("Database is load.")
+
+	if reset_user_flag != nil && reset_password_flag != nil && len(*reset_user_flag) > 0 && len(*reset_password_flag) > 0 {
+		userID := db.UserIDFromUsername(*reset_user_flag)
+		u := db.GetUser(userID)
+		if u == nil {
+			if err := db.CreateUser(*reset_user_flag, *reset_password_flag); err != nil {
+				Logger.Critical("Create user failed: %v", err)
+				return
+			}
+			Logger.Info("User created: %v", *reset_user_flag)
+		} else {
+			if err := db.UpdatePwd(userID, *reset_password_flag); err != nil {
+				Logger.Critical("Reset password failed: %v", err)
+				return
+			}
+			Logger.Info("Password reset ok: %v", *reset_user_flag)
+		}
+
+		if reset_keep_running_flag == nil || !*reset_keep_running_flag {
+			return
+		}
+	}
 
 	l, err := net.Listen("tcp", *addr_flag)
 	if err != nil {
