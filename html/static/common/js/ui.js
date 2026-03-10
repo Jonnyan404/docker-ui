@@ -294,7 +294,7 @@ loadAllCss()
 var local_node = {
     node_host: "192.168.56.102",
     node_port: "2375",
-    node_version: "v1.32",
+    node_version: "v1.44",
     volumes: [],
     logs:[],
 }

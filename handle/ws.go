@@ -4,6 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"net"
+	"net/http"
+	"net/http/httputil"
+	"strings"
+	"time"
+
 	"github.com/fasthttp/websocket"
 	. "github.com/gohutool/boot4go-docker-ui/log"
 	. "github.com/gohutool/boot4go-docker-ui/model"
@@ -11,11 +17,6 @@ import (
 	fasthttputil "github.com/gohutool/boot4go-util/http"
 	routing "github.com/qiangxue/fasthttp-routing"
 	"github.com/valyala/fasthttp"
-	"net"
-	"net/http"
-	"net/http/httputil"
-	"strings"
-	"time"
 )
 
 var upgrader = fasthttputil.Upgrader{
@@ -66,7 +67,7 @@ func getRequestInfo4WS(context string, ctx *routing.Context) (rtn RequestInfo, e
 	version := strings.TrimSpace(arr[2])
 
 	if len(version) == 0 {
-		version = "v1.32"
+		version = "v1.44"
 	}
 
 	if strings.Index(version, "v1.") != 0 {

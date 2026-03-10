@@ -2,9 +2,10 @@ package handle
 
 import (
 	"errors"
+	"strings"
+
 	. "github.com/gohutool/boot4go-docker-ui/model"
 	routing "github.com/qiangxue/fasthttp-routing"
-	"strings"
 )
 
 /**
@@ -40,7 +41,7 @@ func GetRequestInfo(context string, ctx *routing.Context) (rtn RequestInfo, err 
 	version := string(ctx.Request.Header.Peek("endpoint_version"))
 
 	if len(version) == 0 {
-		version = "v1.32"
+		version = "v1.44"
 	}
 
 	if strings.Index(version, "v1.") != 0 {
