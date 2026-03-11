@@ -3,7 +3,6 @@ package main
 import (
 	"expvar"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -20,7 +19,6 @@ import (
 	. "github.com/gohutool/boot4go-docker-ui/log"
 	constants "github.com/gohutool/boot4go-docker-ui/model"
 	prometheusfasthttp "github.com/gohutool/boot4go-prometheus/fasthttp"
-	util4go "github.com/gohutool/boot4go-util"
 	httputil "github.com/gohutool/boot4go-util/http"
 	routing "github.com/qiangxue/fasthttp-routing"
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -43,11 +41,12 @@ import (
 * 修改历史 : 1. [2022/5/12 20:19] 创建文件 by LongYong
 */
 
+var SERVER_VERSION = "docker-ui-dev"
+
 const (
-	SERVER_VERSION = "docker-ui-v1.0.0"
-	SERVER_MAJOR   = 1
-	SERVER_MINOR   = 0
-	SERVER_BUILD   = 0
+	SERVER_MAJOR = 1
+	SERVER_MINOR = 0
+	SERVER_BUILD = 0
 )
 
 func main() {
@@ -68,8 +67,8 @@ func main() {
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
 
-	initLicenseFile(*li_flag)
-	initEndpointFile(*endpoint_flag)
+	setLicenseJS(*li_flag)
+	setEndpointJS(*endpoint_flag)
 
 	db.InitDB()
 
@@ -142,51 +141,6 @@ func initAdmin() error {
 	return nil
 }
 
-func initLicenseFile(li string) {
-	var txt string
-	if util4go.IsEmpty(li) {
-		txt = ""
-	} else {
-		txt = `
-				myConfig.li="%v";
-			`
-		txt = fmt.Sprintf(txt, li)
-	}
-	err2 := ioutil.WriteFile("./html/static/public/js/cubeui.li.js", []byte(txt), 0666) //写入文件(字节数组)
-	if err2 != nil {
-		panic("License check error:" + err2.Error())
-	}
-}
-
-func initEndpointFile(endpoint string) {
-	var txt string
-	if util4go.IsEmpty(endpoint) {
-		Logger.Info("Local Docker Endpoint is attached")
-		return
-	} else {
-		v2 := strings.Split(endpoint, ":")
-		host, port := "unix", "2375"
-		if len(v2) >= 1 {
-			host = v2[0]
-		}
-		if len(v2) >= 2 {
-			port = v2[1]
-		}
-
-		txt = `
-				local_node.node_host = "%v";
-				local_node.node_port = "%v";
-			`
-		txt = fmt.Sprintf(txt, host, port)
-
-		Logger.Info("%v Docker Endpoint is attached", endpoint)
-	}
-	err2 := ioutil.WriteFile("./html/api/node.config.js", []byte(txt), 0666) //写入文件(字节数组)
-	if err2 != nil {
-		panic("Endpoint check error:" + err2.Error())
-	}
-}
-
 func startHttpServer(listener net.Listener) {
 
 	router := routing.New()
@@ -196,20 +150,7 @@ func startHttpServer(listener net.Listener) {
 	handle.PrometheusHandler.InitRouter(router, v3Group)
 	handle.UserHandler.InitRouter(router, v3Group)
 
-	fs := &fasthttp.FS{
-		Root:               "./html",
-		IndexNames:         []string{"index.html", "index.hml"},
-		GenerateIndexPages: true,
-		Compress:           false,
-		AcceptByteRange:    false,
-		PathNotFound: func(ctx *fasthttp.RequestCtx) {
-			ctx.Response.Header.SetContentType("application/json;charset=utf-8")
-			ctx.SetStatusCode(fasthttp.StatusNotFound)
-			ctx.Write([]byte(httputil.Result.Fail(fmt.Sprintf("Page Not Found, %v %v", string(ctx.Method()), string(ctx.RequestURI()))).Json()))
-		},
-	}
-
-	fsHandler := fs.NewRequestHandler()
+	fsHandler := newStaticHandler()
 
 	router.Get("/stats", func(ctx *routing.Context) error {
 		expvarhandler.ExpvarHandler(ctx.RequestCtx)

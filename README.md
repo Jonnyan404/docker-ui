@@ -24,9 +24,8 @@ which is convenient and efficient for deployment.
 Our primary goals are:
 You can use Docker UI to manage the docker and swarm instance more easy.
 
-Official site: https://github.com/gohutool/docker.ui
+Official site: https://github.com/jonnyan404/docker-ui
 
-![image](https://img-blog.csdnimg.cn/80904917c49d4a1ca8e4da6d9d1ee656.png)
 
 ## Feature
 
@@ -105,7 +104,7 @@ Official site: https://github.com/gohutool/docker.ui
 ## Installation and Getting Started
 
 ### From Github
-- Download sourcecode from github website, visit https://github.com/gohutool/docker.ui .
+- Download sourcecode from github website, visit https://github.com/jonnyan404/docker-ui .
 - Install the golang runtime environment.
 - Come into the project directory
 - Run command as blow;
@@ -113,8 +112,28 @@ Official site: https://github.com/gohutool/docker.ui
   - export GOPROXY="https://goproxy.cn,direct"
   - go mod tidy
   - go mod download
-  - go build -o server .
-- Run ./server command to start
+  - go build -o docker-ui .
+- Run ./docker-ui command to start
+
+### From GitHub Release (Binaries)
+
+If you don't want to install Go locally, you can download pre-built binaries from GitHub Releases.
+
+1) Download the binary for your OS/CPU from the Release assets, for example:
+- Linux: `docker-ui-linux-amd64`, `docker-ui-linux-arm64`, `docker-ui-linux-armv7`
+- macOS: `docker-ui-darwin-amd64`, `docker-ui-darwin-arm64`
+- Windows: `docker-ui-windows-amd64.exe`, `docker-ui-windows-arm64.exe`
+
+2) Release binaries embed the static UI files, so they can run as a single self-contained executable.
+
+3) Run it:
+- Linux/macOS:
+  - `chmod +x ./docker-ui-linux-amd64`
+  - `./docker-ui-linux-amd64 --addr :8999 --endpoint unix`
+- Windows (PowerShell):
+  - `./docker-ui-windows-amd64.exe --addr :8999 --endpoint unix`
+
+Tip: You may rename the binary to `docker-ui` for convenience.
 
 ### Form docker-compose
 
@@ -122,7 +141,7 @@ Official site: https://github.com/gohutool/docker.ui
 # docker-compose.yml
 services:
     docker-ui:
-        container_name: dockerui
+        container_name: docker-ui
         restart: always
         volumes:
             - ./data:/app/config
@@ -137,12 +156,29 @@ services:
 - pull image from hub
   - docker image pull jonnyan404/docker-ui
 - start container with image, and publish 8999 port to your port
-  - docker run -d --name dockerui -v /var/run/docker.sock:/var/run/docker.sock -p 8999:8999 jonnyan404/docker-ui
+  - docker run -d --name docker-ui -v /var/run/docker.sock:/var/run/docker.sock -p 8999:8999 jonnyan404/docker-ui
 
 ## Visit the browser tool
 - Now, you can visit like as http://192.168.56.102:8999 .
 - Default Username/Password dockerui/dockerui
 - Enjoy it now.
+
+## Command line options
+
+All available command line options:
+
+| Option | Short | Default | Description |
+|---|---:|---:|---|
+| `--addr` | `-l` | `:8999` | Listen address of DockerUI HTTP server. |
+| `--issuer` | `-i` | `DEFAULT_ISSUER` | JWT token issuer. |
+| `--token_expire` | `-e` | `24` | Token expiration time in hours. |
+| `--endpoint` |  | `unix` | Docker endpoint. Use `unix` for local `/var/run/docker.sock`, or `HOST:PORT` for TCP (e.g. `192.168.56.102:2375`). |
+| `--license` |  | empty | CubeUI license string. |
+| `--reset-user` |  | empty | Reset password for username (creates user if not exists), then exit unless `--reset-keep-running` is set. |
+| `--reset-password` |  | empty | Password used with `--reset-user`. |
+| `--reset-keep-running` |  | `false` | Keep running the server after reset/create user. |
+| `--help` | `-h` |  | Show help. |
+| `--version` |  |  | Show version. |
 
 ## Forgot password / bootstrap admin
 
@@ -150,8 +186,13 @@ If you forgot the password and cannot login to the UI, you can reset (or create)
 
 - Reset password (or create if not exists), then exit:
   - `go run . --reset-user dockerui --reset-password NEW_PASSWORD`
+- Reset password (or create if not exists) using binary, then exit (rename your binary to `dockerui` first):
+- Reset password (or create if not exists) using binary, then exit:
+  - `./docker-ui --reset-user dockerui --reset-password NEW_PASSWORD`
 - Keep running the server after reset/create:
   - `go run . --reset-user dockerui --reset-password NEW_PASSWORD --reset-keep-running`
+- Keep running the server after reset/create using binary:
+  - `./docker-ui --reset-user dockerui --reset-password NEW_PASSWORD --reset-keep-running`
 
 Note:
 - `dockerui` is created only on first database initialization (fresh `./data.db`). If you delete it later, it will NOT be restored automatically on restart.

@@ -1,0 +1,55 @@
+version: 2
+
+project_name: docker-ui
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: docker-ui
+    main: .
+    binary: docker-ui
+    flags:
+      - -tags=embed
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.SERVER_VERSION=docker-ui-{{ .Tag }}
+
+  - id: docker-ui-linux-armv7
+    main: .
+    binary: docker-ui
+    flags:
+      - -tags=embed
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - arm
+    goarm:
+      - "7"
+    ldflags:
+      - -s -w -X main.SERVER_VERSION=docker-ui-{{ .Tag }}
+
+archives:
+  - format: binary
+    name_template: "docker-ui-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  github:
+    replace_existing_artifacts: true
+    mode: keep-existing
+  prerelease: auto
+  draft: false
