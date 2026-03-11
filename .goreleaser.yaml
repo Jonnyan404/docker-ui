@@ -9,7 +9,8 @@ before:
 builds:
   - id: docker-ui
     main: .
-    binary: docker-ui
+    binary: docker-ui-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ .Ext }}
+    no_unique_dist_dir: true
     flags:
       - -tags=embed
     env:
@@ -26,7 +27,8 @@ builds:
 
   - id: docker-ui-linux-armv7
     main: .
-    binary: docker-ui
+    binary: docker-ui-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ .Ext }}
+    no_unique_dist_dir: true
     flags:
       - -tags=embed
     env:
@@ -39,10 +41,6 @@ builds:
       - "7"
     ldflags:
       - -s -w -X main.SERVER_VERSION=docker-ui-{{ .Tag }}
-
-archives:
-  - format: binary
-    name_template: "docker-ui-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
 
 checksum:
   name_template: checksums.txt
